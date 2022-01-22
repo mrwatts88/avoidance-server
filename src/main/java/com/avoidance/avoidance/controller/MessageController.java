@@ -1,27 +1,29 @@
 package com.avoidance.avoidance.controller;
 
-import com.avoidance.avoidance.model.Message;
-import com.avoidance.avoidance.model.OutgoingMessage;
+import com.avoidance.avoidance.model.IncomingMessage;
+import com.avoidance.avoidance.service.StateService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.util.HtmlUtils;
+
+import java.security.Principal;
 
 @Controller
 public class MessageController {
 
-    @MessageMapping("/start")
-    @SendTo("/topic/updates")
-    public OutgoingMessage start(Message message) throws Exception {
-        System.out.println("start");
-        Thread.sleep(1000);
-        return new OutgoingMessage("Hello, " + message.getName());
+    @Autowired
+    private StateService stateService;
+
+    @MessageMapping("/start/{id}")
+    public void start( @Payload IncomingMessage incomingMessage, @DestinationVariable String id) {
+        stateService.start(id, incomingMessage.getSeekers());
     }
 
-    @SendTo("/topic/updates")
-    public OutgoingMessage update(Message message) throws Exception {
-        System.out.println("update");
-        Thread.sleep(1000);
-        return new OutgoingMessage("Updating, " + HtmlUtils.htmlEscape(message.getName()) + "!");
+    @MessageMapping("/stop/{id}")
+    public void stop(@DestinationVariable String id) {
+        stateService.stop(id);
     }
 }
